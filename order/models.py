@@ -27,12 +27,12 @@ class PaymentMethod(models.Model):
 
 class Order(models.Model):
     user                 = models.ForeignKey(User,on_delete=models.CASCADE)
-    delivery_information = models.ForeignKey(DeliveryInformation,on_delete=models.CASCADE, blank=True)
+    delivery_information = models.ForeignKey(DeliveryInformation,on_delete=models.CASCADE, null=True)
     status               = models.ForeignKey(Status, on_delete=models.CASCADE)
     order_number         = models.CharField(max_length=30)
     payment_method       = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
     created_at           = models.DateTimeField(auto_now_add=True)
-    updated_at           = models.DateTimeField(auto_now=True, blank=True)
+    updated_at           = models.DateTimeField(auto_now=True)
     delivery_fee         = models.IntegerField(default=3000)
 
     class Meta:

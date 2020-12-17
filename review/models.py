@@ -9,7 +9,7 @@ class Review(models.Model):
     user                = models.ForeignKey(User, on_delete=models.CASCADE)
     product             = models.ForeignKey(Product, on_delete=models.CASCADE)
     created_at          = models.DateTimeField(auto_now_add=True)
-    updated_at          = models.DateTimeField(auto_now=True, blank=True)
+    updated_at          = models.DateTimeField(auto_now=True)
     is_monthly_reviewed = models.BooleanField(default=True)
 
     class Meta:
@@ -27,7 +27,7 @@ class Question(models.Model):
     product    = models.ForeignKey(Product, on_delete=models.CASCADE)
     contents   = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "questions"
@@ -36,7 +36,7 @@ class Answer(models.Model):
     contents   = models.TextField()
     question   = models.ForeignKey(Question, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "answers"
