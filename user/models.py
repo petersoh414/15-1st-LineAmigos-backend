@@ -18,7 +18,7 @@ class Gender(models.Model):
         return self.name
 
 class PhoneNumber(models.Model):
-    country_code =  models.CharField(max_length=20)
+    country_code = models.CharField(max_length=20)
     phone_number = models.CharField(max_length = 20)
 
     class Meta:

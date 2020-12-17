@@ -1,17 +1,15 @@
 from django.db              import models
-from django.utils           import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
 from user.models            import User
 from product.models         import Product
-
 
 class Review(models.Model):
     rate                = models.FloatField(validators=[MinValueValidator(0.5),MaxValueValidator(5.0)])
     contents            = models.TextField()
     user                = models.ForeignKey(User, on_delete=models.CASCADE)
     product             = models.ForeignKey(Product, on_delete=models.CASCADE)
-    created_at          = models.DateTimeField(default=timezone.now)
-    updated_at          = models.DateTimeField(default=timezone.now, blank=True)
+    created_at          = models.DateTimeField(auto_now_add=True)
+    updated_at          = models.DateTimeField(auto_now=True, blank=True)
     is_monthly_reviewed = models.BooleanField(default=True)
 
     class Meta:
@@ -28,8 +26,8 @@ class Question(models.Model):
     user       = models.ForeignKey(User, on_delete=models.CASCADE)
     product    = models.ForeignKey(Product, on_delete=models.CASCADE)
     contents   = models.TextField()
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(default=timezone.now, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
 
     class Meta:
         db_table = "questions"
@@ -37,8 +35,8 @@ class Question(models.Model):
 class Answer(models.Model):
     contents   = models.TextField()
     question   = models.ForeignKey(Question, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(default=timezone.now, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
 
     class Meta:
         db_table = "answers"

@@ -1,7 +1,7 @@
 from django.db      import models
 from user.models    import User
 from product.models import Product
-from django.utils   import timezone
+
 
 class DeliveryInformation(models.Model):
     basic_address          = models.CharField(max_length=200)
@@ -19,14 +19,20 @@ class Status(models.Model):
     class Meta:
         db_table = 'status'
 
+class PaymentMethod(models.Model):
+    name = models.CharField(max_length = 50)
+
+    class Meta:
+        db_table = 'payment_methods'
+
 class Order(models.Model):
     user                 = models.ForeignKey(User,on_delete=models.CASCADE)
-    delivery_information = models.ForeignKey(DeliveryInformation,on_delete=models.CASCADE)
+    delivery_information = models.ForeignKey(DeliveryInformation,on_delete=models.CASCADE, blank=True)
     status               = models.ForeignKey(Status, on_delete=models.CASCADE)
-    order_number         = models.IntegerField()
-    payment_method       = models.CharField(max_length=20)
-    created_at           = models.DateTimeField(default=timezone.now)
-    updated_at           = models.DateTimeField(default=timezone.now, blank=True)
+    order_number         = models.CharField(max_length=30)
+    payment_method       = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
+    created_at           = models.DateTimeField(auto_now_add=True)
+    updated_at           = models.DateTimeField(auto_now=True, blank=True)
     delivery_fee         = models.IntegerField(default=3000)
 
     class Meta:
