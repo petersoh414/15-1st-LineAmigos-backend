@@ -3,21 +3,12 @@ from django.http             import JsonResponse
 from django.views            import View
 from django.core.serializers import serialize
 from user.models             import User
-from product.models          import (
-                                    Menu, 
-                                    Category, 
-                                    Product, 
-                                    Image,
-                                    Size,
-                                    ProductSize,
-                                    Wishlist
-                                    )
+from product.models          import Category, Product, Image
 
 class PostView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
-            print(data)
             product_name     = data['name']
             product_price    = data['price']
             product_category = data['category']
@@ -48,23 +39,44 @@ class PostView(View):
         except KeyError:
             return JsonResponse({'MESSAGE' : 'NOT_ENOUGH_INFO'}, status=400)
 
-class GetView(View):
+class ProductView(View):
     def get(self,request):
-        data = json.loads(request.body)
+        try:
+            products = Product.objects.select_related('category', 'category__menu').prefetch_related('image_set').all()
+            
+            all_product = [{
+                    'product_menu': product.category.menu.name,
+                    'product_category': product.category.name,
+                    'product_id': product.id,
+                    'name' : product.name,
+                    'price': product.price,
+                    'created_time': product.created_at,
+                    'product_image': product.image_set.get().image_url
+                    } for product in products] 
 
-       # 모든 제품정보 뿌려주기
-        product_values = Product.objects.all().order_by('-id')
-        product_data = json.loads(serialize('json', product_values))
-        category_values = Category.objects.all().order_by('-id')
-        category_data = json.loads(serialize('json', category_values))
-        menu_values = Menu.objects.all().order_by('-id')
-        menu_data = json.loads(serialize('json', menu_values))
-        image_values = Image.objects.all().order_by('-id')
-        image_data = json.loads(serialize('json', image_values))
-        return JsonResponse(
-            {'products':product_data, 
-            'categories':category_data,
-            'menus':menu_data,
-            'images':image_data
-            }
-        )
+            return JsonResponse({'PRODUCTS': all_product}, status=200)
+        except Product.DoesNotExist:
+            return JsonResponse({'MESSAGE' : 'NO_PRODUCT'}, status=500)
+
+class ProductDetailView(View):
+    def get(self, request, product_id):
+        try:
+            product = Product.objects.select_related('category', 'category__menu').prefetch_related('image_set', 'productsize_set', 'wishlist_set').get(id=product_id)
+        
+            product_detail = {
+                    'id': product.id,
+                    'product_category': product.category.name,
+                    'product_menu': product.category.menu.name,
+                    'product_name': product.name,
+                    'price': product.price,
+                    'created_time': product.created_at,
+                    'image': product.image_set.get().image_url,
+                    #추후 리뷰 불러오기용도    : product.productdescription_set.get().content,
+                    #추후 리뷰 불러오기용도     : product.detailedimage_set.get().product_image_url,
+                    }
+            return JsonResponse({'product_id' :product_detail}, status=200)
+
+        except Product.DoesNotExist:
+            return JsonResponse({'MESSAGE' : 'NO_PRODUCT'}, status=401)
+
+
