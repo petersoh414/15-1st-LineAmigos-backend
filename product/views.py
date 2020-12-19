@@ -3,7 +3,15 @@ from django.http             import JsonResponse
 from django.views            import View
 from django.core.serializers import serialize
 from user.models             import User
-from product.models          import Menu, Category, Product, Image
+from product.models          import (
+                                    Menu, 
+                                    Category, 
+                                    Product, 
+                                    Image,
+                                    Size,
+                                    ProductSize,
+                                    Wishlist
+                                    )
 
 class PostView(View):
     def post(self, request):
@@ -40,3 +48,23 @@ class PostView(View):
         except KeyError:
             return JsonResponse({'MESSAGE' : 'NOT_ENOUGH_INFO'}, status=400)
 
+class GetView(View):
+    def get(self,request):
+        data = json.loads(request.body)
+
+       # 모든 제품정보 뿌려주기
+        product_values = Product.objects.all().order_by('-id')
+        product_data = json.loads(serialize('json', product_values))
+        category_values = Category.objects.all().order_by('-id')
+        category_data = json.loads(serialize('json', category_values))
+        menu_values = Menu.objects.all().order_by('-id')
+        menu_data = json.loads(serialize('json', menu_values))
+        image_values = Image.objects.all().order_by('-id')
+        image_data = json.loads(serialize('json', image_values))
+        return JsonResponse(
+            {'products':product_data, 
+            'categories':category_data,
+            'menus':menu_data,
+            'images':image_data
+            }
+        )
