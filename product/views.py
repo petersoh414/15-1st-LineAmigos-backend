@@ -45,14 +45,14 @@ class ProductView(View):
             products = Product.objects.select_related('category', 'category__menu').prefetch_related('image_set').all()
             
             all_product = [{
-                    'product_menu': product.category.menu.name,
+                    'product_menu'    : product.category.menu.name,
                     'product_category': product.category.name,
-                    'product_id': product.id,
-                    'name' : product.name,
-                    'price': product.price,
-                    'created_time': product.created_at,
-                    'product_image': product.image_set.get().image_url,
-                    'sale_amount' : 10
+                    'product_id'      : product.id,
+                    'name'            : product.name,
+                    'price'           : product.price,
+                    'created_time'    : product.created_at,
+                    'product_image'   : product.image_set.get().image_url,
+                    'sale_amount'     : 10 # 추가 구현 예정
                     } for product in products] 
 
             return JsonResponse({'PRODUCTS': all_product}, status=200)
@@ -65,13 +65,13 @@ class ProductDetailView(View):
             product = Product.objects.select_related('category', 'category__menu').prefetch_related('image_set', 'productsize_set', 'wishlist_set').get(id=product_id)
         
             product_detail = {
-                    'id': product.id,
+                    'id'              : product.id,
                     'product_category': product.category.name,
-                    'product_menu': product.category.menu.name,
-                    'product_name': product.name,
-                    'price': product.price,
-                    'created_time': product.created_at,
-                    'image': product.image_set.get().image_url,
+                    'product_menu'    : product.category.menu.name,
+                    'product_name'    : product.name,
+                    'price'           : product.price,
+                    'created_time'    : product.created_at,
+                    'image'           : product.image_set.get().image_url,
                     #추후 리뷰 불러오기용도    : product.productdescription_set.get().content,
                     #추후 리뷰 불러오기용도     : product.detailedimage_set.get().product_image_url,
                     }
@@ -86,13 +86,13 @@ class MenuView(View):
             menus = Menu.objects.prefetch_related('category_set').all()
 
             menu_category = [{
-                '1_id' : menu.id,
-                '2_menu' : menu.name,
-                '3_categories' : [
+                'id'         : menu.id,
+                'menu'       : menu.name,
+                'categories' : [
                     category.name
                     for category  in menu.category_set.all()]
                 } for menu in menus]
 
-            return JsonResponse({'mane' : menu_category}, status=200)
+            return JsonResponse({'main' : menu_category}, status=200)
         except:
             return JsonResponse({'MESSAGE' : 'SUCCESS'}, status=400)
