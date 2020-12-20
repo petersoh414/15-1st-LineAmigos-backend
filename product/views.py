@@ -3,7 +3,7 @@ from django.http             import JsonResponse
 from django.views            import View
 from django.core.serializers import serialize
 from user.models             import User
-from product.models          import Category, Product, Image
+from product.models          import Category, Product, Image, Menu
 
 class PostView(View):
     def post(self, request):
@@ -51,7 +51,8 @@ class ProductView(View):
                     'name' : product.name,
                     'price': product.price,
                     'created_time': product.created_at,
-                    'product_image': product.image_set.get().image_url
+                    'product_image': product.image_set.get().image_url,
+                    'sale_amount' : 10
                     } for product in products] 
 
             return JsonResponse({'PRODUCTS': all_product}, status=200)
@@ -79,4 +80,19 @@ class ProductDetailView(View):
         except Product.DoesNotExist:
             return JsonResponse({'MESSAGE' : 'NO_PRODUCT'}, status=401)
 
+class MenuView(View):
+    def get(self, request):
+        try:
+            menus = Menu.objects.prefetch_related('category_set').all()
 
+            menu_category = [{
+                '1_id' : menu.id,
+                '2_menu' : menu.name,
+                '3_categories' : [
+                    category.name
+                    for category  in menu.category_set.all()]
+                } for menu in menus]
+
+            return JsonResponse({'mane' : menu_category}, status=200)
+        except:
+            return JsonResponse({'MESSAGE' : 'SUCCESS'}, status=400)
