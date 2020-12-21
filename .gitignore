@@ -325,7 +325,7 @@ fabric.properties
 # End of https://www.toptal.com/developers/gitignore/api/python,django,vscode,pycharm
 
 my_settings.py
-db_uploader.py
 *.csv
+db_uploader.py
 .DS_Store
 
