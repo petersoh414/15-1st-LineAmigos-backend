@@ -327,3 +327,4 @@ fabric.properties
 my_settings.py
 db_uploader.py
 *.csv
+.DS_Store
