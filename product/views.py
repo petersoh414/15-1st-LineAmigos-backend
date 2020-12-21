@@ -23,13 +23,14 @@ class PostView(View):
                 return JsonResponse({'MESSAGE' : 'NO_CATEGORY'}, status=400)
 
             # Product validation
-            if not Product.objects.filter(name = product_name, price = product_price).exists():
-                category_id = Category.objects.get(name = product_category).id
-                Product.objects.create(name = product_name, price = product_price, category_id =category_id)
-                product_id = Product.objects.get(name = product_name).id
-                Image.objects.create(image_url = product_image, product_id = product_id)
-                return JsonResponse({'MESSAGE' : 'ALL_SUCCESS'}, status=201)
-            return JsonResponse({'MESSAGE' : 'EXIST_PRODUCT'}, status=401)
+            if Product.objects.filter(name = product_name, price = product_price).exists():
+                return JsonResponse({'MESSAGE' : 'EXIST_PRODUCT'}, status=409)
+            category_id = Category.objects.get(name = product_category).id
+            Product.objects.create(name = product_name, price = product_price, category_id =category_id)
+            product_id = Product.objects.get(name = product_name).id
+            Image.objects.create(image_url = product_image, product_id = product_id)
+            return JsonResponse({'MESSAGE' : 'SUCCESS'}, status=201)
+
         
         # Request validation
         except json.JSONDecodeError:
@@ -39,12 +40,11 @@ class PostView(View):
         except KeyError:
             return JsonResponse({'MESSAGE' : 'NOT_ENOUGH_INFO'}, status=400)
 
-class ProductView(View):
+class AllProductView(View):
     def get(self,request):
-        try:
-            products = Product.objects.select_related('category', 'category__menu').prefetch_related('image_set').all()
-            
-            all_product = [{
+        products = Product.objects.select_related('category', 'category__menu').prefetch_related('image_set').all()
+
+        all_product = [{
                     'product_menu'    : product.category.menu.name,
                     'product_category': product.category.name,
                     'product_id'      : product.id,
@@ -53,11 +53,9 @@ class ProductView(View):
                     'created_time'    : product.created_at,
                     'product_image'   : product.image_set.get().image_url,
                     'sale_amount'     : 10 # 추가 구현 예정
-                    } for product in products] 
+                    } for product in products]
 
-            return JsonResponse({'PRODUCTS': all_product}, status=200)
-        except Product.DoesNotExist:
-            return JsonResponse({'MESSAGE' : 'NO_PRODUCT'}, status=500)
+        return JsonResponse({'PRODUCTS': all_product}, status=200)
 
 class ProductDetailView(View):
     def get(self, request, product_id):
@@ -72,20 +70,18 @@ class ProductDetailView(View):
                     'price'           : product.price,
                     'created_time'    : product.created_at,
                     'image'           : product.image_set.get().image_url,
-                    #추후 리뷰 불러오기용도    : product.productdescription_set.get().content,
-                    #추후 리뷰 불러오기용도     : product.detailedimage_set.get().product_image_url,
+                    #리뷰 구성 후 추가 구현 예정
                     }
-            return JsonResponse({'product_id' :product_detail}, status=200)
+            return JsonResponse({'product' :product_detail}, status=200)
 
         except Product.DoesNotExist:
-            return JsonResponse({'MESSAGE' : 'NO_PRODUCT'}, status=401)
+            return JsonResponse({'MESSAGE' : 'NO_PRODUCT'}, status=409)
 
 class MenuView(View):
     def get(self, request):
-        try:
-            menus = Menu.objects.prefetch_related('category_set').all()
+        menus = Menu.objects.prefetch_related('category_set').all()
 
-            menu_category = [{
+        menu_category = [{
                 'id'         : menu.id,
                 'menu'       : menu.name,
                 'categories' : [
@@ -93,6 +89,4 @@ class MenuView(View):
                     for category  in menu.category_set.all()]
                 } for menu in menus]
 
-            return JsonResponse({'main' : menu_category}, status=200)
-        except:
-            return JsonResponse({'MESSAGE' : 'SUCCESS'}, status=400)
+        return JsonResponse({'main' : menu_category}, status=200)
