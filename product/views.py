@@ -1,9 +1,11 @@
 import json
-from django.http             import JsonResponse
-from django.views            import View
-from django.core.serializers import serialize
-from user.models             import User
-from product.models          import Category, Product, Image, Menu
+
+from django.http    import JsonResponse
+from django.views   import View
+
+from user.models    import User
+from product.models import Category, Product, Image, Menu
+from review.models  import Review, ReviewImage
 
 class PostView(View):
     def post(self, request):
@@ -16,7 +18,7 @@ class PostView(View):
 
             # Key validation
             if data['name'] == '' or data['price'] == '' or data['category'] == '' or data['image'] == '':
-                raise KeyError
+                raise ValueError
             
             # Category validation
             if not Category.objects.filter(name = product_category).exists():
@@ -37,12 +39,12 @@ class PostView(View):
             return JsonResponse({'MESSAGE' : 'BAD_REQUEST'}, status=400)
         
         # Not enough info
-        except KeyError:
+        except ValueError:
             return JsonResponse({'MESSAGE' : 'NOT_ENOUGH_INFO'}, status=400)
 
 class AllProductView(View):
     def get(self,request):
-        products = Product.objects.select_related('category', 'category__menu').prefetch_related('image_set').all()
+        products = Product.objects.all()
 
         all_product = [{
                     'product_menu'    : product.category.menu.name,
@@ -52,7 +54,7 @@ class AllProductView(View):
                     'price'           : product.price,
                     'created_time'    : product.created_at,
                     'product_image'   : product.image_set.get().image_url,
-                    'sale_amount'     : 10 # 추가 구현 예정
+                    'sale_amount'     : 10,
                     } for product in products]
 
         return JsonResponse({'PRODUCTS': all_product}, status=200)
@@ -60,7 +62,7 @@ class AllProductView(View):
 class ProductDetailView(View):
     def get(self, request, product_id):
         try:
-            product = Product.objects.select_related('category', 'category__menu').prefetch_related('image_set', 'productsize_set', 'wishlist_set').get(id=product_id)
+            product = Product.objects.get(id=product_id)
         
             product_detail = {
                     'id'              : product.id,
@@ -70,7 +72,6 @@ class ProductDetailView(View):
                     'price'           : product.price,
                     'created_time'    : product.created_at,
                     'image'           : product.image_set.get().image_url,
-                    #리뷰 구성 후 추가 구현 예정
                     }
             return JsonResponse({'product' :product_detail}, status=200)
 
@@ -79,7 +80,7 @@ class ProductDetailView(View):
 
 class MenuView(View):
     def get(self, request):
-        menus = Menu.objects.prefetch_related('category_set').all()
+        menus = Menu.objects.all()
 
         menu_category = [{
                 'id'         : menu.id,
