@@ -8,3 +8,4 @@ urlpatterns = [
         path('/<int:product_id>', ProductDetailView.as_view()),
 ]
 
+
