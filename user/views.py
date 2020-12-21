@@ -12,16 +12,15 @@ from .utils  import validate_username, validate_name, validate_password, validat
 class SignUpView(View):
     def post(self, request):
         try:
-            data            = json.loads(request.body)
-            username        = data.get("username")
-            name            = data.get("name")
-            gender       = data.get("gender")
-            date_of_birth   = data.get("date_of_birth")
-            password        = data.get("password")
-            country_code    = data.get("country_code")
-            phone_number    = data.get("phone_number")
+            data          = json.loads(request.body)
+            username      = data.get("username")
+            name          = data.get("name")
+            gender        = data.get("gender")
+            date_of_birth = data.get("date_of_birth")
+            password      = data.get("password")
+            country_code  = data.get("country_code")
+            phone_number  = data.get("phone_number")
 
-            print(data, username,name,phone_number)
             if not validate_username(username):
                 return JsonResponse({'message': 'INVALID_USERNAME_FORMAT'}, status=401)
 
@@ -68,7 +67,7 @@ class SignUpView(View):
 class SignInView(View):
     def post(self, request):
         try:
-            data = json.loads(request.body)
+            data     = json.loads(request.body)
             username = User.objects.get(username=data['username'])
 
             if not User.objects.filter(username=data['username']).exists():
