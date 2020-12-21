@@ -31,20 +31,17 @@ class SignInConfirm:
         self.original_function = original_function
 
     def __call__(self, request, *args, **kwargs):
-        token = request.headers.get("Authorization", None)
-        print(token)
+        access_token = request.headers.get("Authorization", None)
+        print(access_token)
 
         try:
-            if token:
-                token_payload = jwt.decode(token, SECRET_KEY, ALGORITHM)
+            if access_token:
+                token_payload = jwt.decode(access_token, SECRET_KEY, ALGORITHM)
                 user          = User.objects.get(id = token_payload["username"])
                 request.user  = user
                 return self.original_function(self, request, *args, **kwargs)
 
             return JsonResponse({'message': "SIGNIN_REQUIRED"}, status = 401)
-
-        except jwt.ExpiredSignatureError:
-            return JsonResponse({'message': "EXPIRED_TOKEN"}, status = 401)
 
         except jwt.DecodeError:
             return JsonResponse({'message': "INVALID_USER"}, status = 401)

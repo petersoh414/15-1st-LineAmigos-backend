@@ -1,5 +1,6 @@
-import json, re, bcrypt, jwt
+import json, re, bcrypt, jwt, datetime
 
+from datetime               import datetime, timedelta
 from django.http            import JsonResponse
 from django.views           import View
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -13,13 +14,13 @@ class SignUpView(View):
     def post(self, request):
         try:
             data          = json.loads(request.body)
-            username      = data.get("username")
-            name          = data.get("name")
-            gender        = data.get("gender")
-            date_of_birth = data.get("date_of_birth")
-            password      = data.get("password")
-            country_code  = data.get("country_code")
-            phone_number  = data.get("phone_number")
+            username        = data['username']
+            name            = data['name']
+            gender          = data['gender']
+            date_of_birth   = data['date_of_birth']
+            password        = data['password']
+            country_code    = data['country_code']
+            phone_number    = data['phone_number']
 
             if not validate_username(username):
                 return JsonResponse({'message': 'INVALID_USERNAME_FORMAT'}, status=401)
@@ -67,17 +68,18 @@ class SignUpView(View):
 class SignInView(View):
     def post(self, request):
         try:
-            data     = json.loads(request.body)
-            username = User.objects.get(username=data['username'])
+            data = json.loads(request.body)
+            user = User.objects.get(username=data['username'])
 
-            if not User.objects.filter(username=data['username']).exists():
-                return JsonResponse({'message': 'USER_NOT_FOUND'}, status=401)
-
-            if bcrypt.checkpw(data['password'].encode('utf-8'), username.password.encode('utf-8')):
-                access_token = jwt.encode({'username': username.id}, SECRET_KEY, algorithm=ALGORITHM)
-                return JsonResponse({'message': 'SUCCESS', 'access_token': access_token.decode('utf-8')}, status=200)
-            else:
+            if not bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
                 return JsonResponse({'message': 'INVALID_PASSWORD'}, status=401)
+
+            payload      = {'username': user.id, 'exp': datetime.now() +timedelta(hours=2)}
+            access_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+            return JsonResponse({'message': 'SUCCESS', 'access_token': access_token.decode('utf-8')}, status=200)
+
+        except User.DoesNotExist:
+            return JsonResponse({'message': 'USER_NOT_FOUND'}, status=401)
 
         except json.JSONDecodeError:
             return JsonResponse({'message': 'FAILED_TO_DECODE_DATA'}, status=400)
