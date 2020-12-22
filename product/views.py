@@ -44,8 +44,17 @@ class PostView(View):
 
 class AllProductView(View):
     def get(self,request):
+        offset = int(request.GET.get('offset', 0))
+        limit = int(request.GET.get('limit', 100))
+        price = request.GET.get('sort', None)
         ordering = request.GET.get('ordering', None)
-        products = Product.objects.all().order_by('-id')if ordering else Product.objects.all() 
+
+        if not price and not ordering:
+            products = Product.objects.all()
+        if price:
+            products = Product.objects.all().order_by('price')
+        if ordering:
+            products = Product.objects.all().order_by('-id')
 
         all_product = [{
                     'product_menu'    : product.category.menu.name,
@@ -57,7 +66,7 @@ class AllProductView(View):
                     'product_image'   : product.image_set.get().image_url,
                     'discount'        : product.discount.rate,
                     'stock'           : product.is_in_stock,
-                    } for product in products]
+                    } for product in products[offset:limit]]
 
         return JsonResponse({'PRODUCTS': all_product}, status=200)
 
