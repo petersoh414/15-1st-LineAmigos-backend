@@ -44,7 +44,8 @@ class PostView(View):
 
 class AllProductView(View):
     def get(self,request):
-        products = Product.objects.all()
+        ordering = request.GET.get('ordering', None)
+        products = Product.objects.all().order_by('-id')if ordering else Product.objects.all() 
 
         all_product = [{
                     'product_menu'    : product.category.menu.name,
@@ -54,16 +55,19 @@ class AllProductView(View):
                     'price'           : product.price,
                     'created_time'    : product.created_at,
                     'product_image'   : product.image_set.get().image_url,
-                    'sale_amount'     : 10,
+                    'discount'        : product.discount.rate,
+                    'stock'           : product.is_in_stock,
                     } for product in products]
 
         return JsonResponse({'PRODUCTS': all_product}, status=200)
 
 class ProductDetailView(View):
-    def get(self, request, product_id):
+    def get(self, request):
         try:
-            product = Product.objects.get(id=product_id)
-        
+            product_id = int(request.GET.get('product', 1))
+            search = request.GET.get('search', None)
+            product = Product.objects.get(name=search)if search else Product.objects.get(id=product_id)
+            
             product_detail = {
                     'id'              : product.id,
                     'product_category': product.category.name,
@@ -72,11 +76,32 @@ class ProductDetailView(View):
                     'price'           : product.price,
                     'created_time'    : product.created_at,
                     'image'           : product.image_set.get().image_url,
+                    'discount'        : product.discount.rate,
+                    'stock'           : product.is_in_stock,
                     }
             return JsonResponse({'product' :product_detail}, status=200)
 
         except Product.DoesNotExist:
             return JsonResponse({'MESSAGE' : 'NO_PRODUCT'}, status=409)
+
+''' # 추가 기능 구현중 필요여부에 따라 삭제하도록 하겠습니다.
+class DetailView(View):
+    def get(self, request):# 카테고리에 해당하는 프로덕트만 보여주기
+        print('==== 11111122222 =====')
+        category = request.GET.get('category', None)
+        category = Category.objects.get(id=category)
+        print(category)
+
+        products = {
+                'name' : category.product_set.name,
+                'price' : category.product_set.price,
+                'image' : category.product_set.image_set.image_url,
+                'review' : [{
+                    'contents' : review.contents,
+                    'rate'     : review.rate
+                    } for review in category.product_set.review_set.all()]} 
+        return JsonResponse({'product' : products}, status=200)
+'''
 
 class MenuView(View):
     def get(self, request):
@@ -91,3 +116,5 @@ class MenuView(View):
                 } for menu in menus]
 
         return JsonResponse({'main' : menu_category}, status=200)
+
+
