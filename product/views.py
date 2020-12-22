@@ -55,6 +55,7 @@ class AllProductView(View):
             products = Product.objects.all().order_by('price')
         if ordering:
             products = Product.objects.all().order_by('-id')
+        
 
         all_product = [{
                     'product_menu'    : product.category.menu.name,
@@ -66,7 +67,7 @@ class AllProductView(View):
                     'product_image'   : product.image_set.get().image_url,
                     'discount'        : product.discount.rate,
                     'stock'           : product.is_in_stock,
-                    } for product in products[offset:limit]]
+                    } for product in products[offset:(limit+offset)]]
 
         return JsonResponse({'PRODUCTS': all_product}, status=200)
 
@@ -76,7 +77,7 @@ class ProductDetailView(View):
             product_id = int(request.GET.get('product', 1))
             search     = request.GET.get('search', None)
             product    = Product.objects.get(name=search)if search else Product.objects.get(id=product_id)
-            
+
             product_detail = {
                     'id'              : product.id,
                     'product_category': product.category.name,
@@ -88,7 +89,8 @@ class ProductDetailView(View):
                     'discount'        : product.discount.rate,
                     'stock'           : product.is_in_stock,
                     }
-            return JsonResponse({'product' :product_detail}, status=200)
+
+            return JsonResponse({'product' :product_detail, 'review' :review_list}, status=200)
 
         except Product.DoesNotExist:
             return JsonResponse({'MESSAGE' : 'NO_PRODUCT'}, status=409)
@@ -126,5 +128,4 @@ class MenuView(View):
                 } for menu in menus]
 
         return JsonResponse({'main' : menu_category}, status=200)
-
 
