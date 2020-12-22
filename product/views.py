@@ -44,9 +44,9 @@ class PostView(View):
 
 class AllProductView(View):
     def get(self,request):
-        offset = int(request.GET.get('offset', 0))
-        limit = int(request.GET.get('limit', 100))
-        price = request.GET.get('sort', None)
+        offset   = int(request.GET.get('offset', 0))
+        limit    = int(request.GET.get('limit', 100))
+        price    = request.GET.get('sort', None)
         ordering = request.GET.get('ordering', None)
 
         if not price and not ordering:
@@ -74,8 +74,8 @@ class ProductDetailView(View):
     def get(self, request):
         try:
             product_id = int(request.GET.get('product', 1))
-            search = request.GET.get('search', None)
-            product = Product.objects.get(name=search)if search else Product.objects.get(id=product_id)
+            search     = request.GET.get('search', None)
+            product    = Product.objects.get(name=search)if search else Product.objects.get(id=product_id)
             
             product_detail = {
                     'id'              : product.id,
@@ -93,7 +93,8 @@ class ProductDetailView(View):
         except Product.DoesNotExist:
             return JsonResponse({'MESSAGE' : 'NO_PRODUCT'}, status=409)
 
-''' # 추가 기능 구현중 필요여부에 따라 삭제하도록 하겠습니다.
+# 추가 기능 구현중 필요여부에 따라 삭제하도록 하겠습니다.
+'''
 class DetailView(View):
     def get(self, request):# 카테고리에 해당하는 프로덕트만 보여주기
         print('==== 11111122222 =====')
