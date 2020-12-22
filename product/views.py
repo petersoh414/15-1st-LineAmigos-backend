@@ -90,7 +90,7 @@ class ProductDetailView(View):
                     'stock'           : product.is_in_stock,
                     }
 
-            return JsonResponse({'product' :product_detail, 'review' :review_list}, status=200)
+            return JsonResponse({'product' :product_detail}, status=200)
 
         except Product.DoesNotExist:
             return JsonResponse({'MESSAGE' : 'NO_PRODUCT'}, status=409)
