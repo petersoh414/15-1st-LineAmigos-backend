@@ -1,11 +1,12 @@
 import json
 
-from django.http    import JsonResponse
-from django.views   import View
+from django.http      import JsonResponse
+from django.views     import View
+from django.db.models import Count
 
-from user.models    import User
-from product.models import Category, Product, Image, Menu
-from review.models  import Review, ReviewImage
+from user.models      import User
+from product.models   import Category, Product, Image, Menu
+from review.models    import Review, ReviewImage
 
 class PostView(View):
     def post(self, request):
@@ -42,22 +43,23 @@ class PostView(View):
         except ValueError:
             return JsonResponse({'MESSAGE' : 'NOT_ENOUGH_INFO'}, status=400)
 
-class AllProductView(View):
+class ProductView(View):
     def get(self,request):
         offset   = int(request.GET.get('offset', 0))
         limit    = int(request.GET.get('limit', 100))
-        price    = request.GET.get('sort', None)
+        sort    = request.GET.get('sort', None)
         ordering = request.GET.get('ordering', None)
-
-        if not price and not ordering: # 수정 대기
-            products = Product.objects.all()
-        if price:
-            products = Product.objects.all().order_by('price')
+        search = request.GET.get('search', None)
+        #ordering_priority = []
+        if sort and ordering:
+            products = Product.objects.order_by('price', '-id')
+        if sort:
+            products = Product.objects.order_by('price')
         if ordering:
-            products = Product.objects.all().order_by('-id')
-
-        print(products)
-
+            products = Product.objects.order_by('-id')
+        if search:
+            products = Product.objects.filter(name__icontains=search)
+        
         all_product = [{
                     'product_menu'    : product.category.menu.name,
                     'product_category': product.category.name,
@@ -75,8 +77,7 @@ class AllProductView(View):
 class ProductDetailView(View):
     def get(self, request, product_id):
         try:
-            search     = request.GET.get('search', None)
-            product    = Product.objects.get(name=search)if search else Product.objects.get(id=product_id)
+            product    = Product.objects.get(id=product_id)
 
             product_detail = {
                     'id'              : product.id,
@@ -95,26 +96,6 @@ class ProductDetailView(View):
         except Product.DoesNotExist:
             return JsonResponse({'MESSAGE' : 'NO_PRODUCT'}, status=409)
 
-# 추가 기능 구현중 필요여부에 따라 삭제하도록 하겠습니다.
-'''
-class DetailView(View):
-    def get(self, request):# 카테고리에 해당하는 프로덕트만 보여주기
-        print('==== 11111122222 =====')
-        category = request.GET.get('category', None)
-        category = Category.objects.get(id=category)
-        print(category)
-
-        products = {
-                'name' : category.product_set.name,
-                'price' : category.product_set.price,
-                'image' : category.product_set.image_set.image_url,
-                'review' : [{
-                    'contents' : review.contents,
-                    'rate'     : review.rate
-                    } for review in category.product_set.review_set.all()]} 
-        return JsonResponse({'product' : products}, status=200)
-'''
-
 class MenuView(View):
     def get(self, request):
         menus = Menu.objects.all()
@@ -128,4 +109,21 @@ class MenuView(View):
                 } for menu in menus]
 
         return JsonResponse({'main' : menu_category}, status=200)
+
+class BestProductView(View):
+    def get(self, request):
+        offset   = int(request.GET.get('offset', 0))
+        limit    = int(request.GET.get('limit', 100))
+        products = Product.objects.all()
+
+        Best_product = [{
+                    'name'            : product.name,
+                    'price'           : product.price,
+                    'created_time'    : product.created_at,
+                    'product_image'   : product.image_set.get().image_url,
+                    'discount'        : product.discount.rate,
+                    'stock'           : product.is_in_stock,
+                    } for product in products[offset:(limit+offset)]]
+
+        return JsonResponse({'PRODUCTS': Best_product}, status=200)
 
