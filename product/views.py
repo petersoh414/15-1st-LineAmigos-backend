@@ -49,13 +49,14 @@ class AllProductView(View):
         price    = request.GET.get('sort', None)
         ordering = request.GET.get('ordering', None)
 
-        if not price and not ordering:
+        if not price and not ordering: # 수정 대기
             products = Product.objects.all()
         if price:
             products = Product.objects.all().order_by('price')
         if ordering:
             products = Product.objects.all().order_by('-id')
-        
+
+        print(products)
 
         all_product = [{
                     'product_menu'    : product.category.menu.name,
@@ -72,9 +73,8 @@ class AllProductView(View):
         return JsonResponse({'PRODUCTS': all_product}, status=200)
 
 class ProductDetailView(View):
-    def get(self, request):
+    def get(self, request, product_id):
         try:
-            product_id = int(request.GET.get('product', 1))
             search     = request.GET.get('search', None)
             product    = Product.objects.get(name=search)if search else Product.objects.get(id=product_id)
 
