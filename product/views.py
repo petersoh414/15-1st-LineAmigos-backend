@@ -2,7 +2,7 @@ import json
 
 from django.http      import JsonResponse
 from django.views     import View
-from django.db.models import Avg, Count, Sum
+from django.db.models import Avg, Count
 
 from user.models      import User
 from product.models   import Category, Product, Image, Menu 
