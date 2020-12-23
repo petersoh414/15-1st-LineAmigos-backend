@@ -47,9 +47,10 @@ class ProductView(View):
     def get(self,request):
         offset   = int(request.GET.get('offset', 0))
         limit    = int(request.GET.get('limit', 100))
-        sort    = request.GET.get('sort', None)
+        sort     = request.GET.get('sort', None)
         ordering = request.GET.get('ordering', None)
-        search = request.GET.get('search', None)
+        search   = request.GET.get('search', None)
+        
         #ordering_priority = []
         if sort and ordering:
             products = Product.objects.order_by('price', '-id')
@@ -98,7 +99,7 @@ class ProductDetailView(View):
 
 class MenuView(View):
     def get(self, request):
-        menus = Menu.objects.all()
+        menus = Menu.objects.prefetch_related('category_set').all()
 
         menu_category = [{
                 'id'         : menu.id,
