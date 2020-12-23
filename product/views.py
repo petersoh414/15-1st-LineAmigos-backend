@@ -1,11 +1,12 @@
 import json
 
-from django.http    import JsonResponse
-from django.views   import View
+from django.http      import JsonResponse
+from django.views     import View
+from django.db.models import Avg, Count
 
-from user.models    import User
-from product.models import Category, Product, Image, Menu
-from review.models  import Review, ReviewImage
+from user.models      import User
+from product.models   import Category, Product, Image, Menu 
+from review.models    import Review, ReviewImage
 
 class PostView(View):
     def post(self, request):
@@ -42,9 +43,27 @@ class PostView(View):
         except ValueError:
             return JsonResponse({'MESSAGE' : 'NOT_ENOUGH_INFO'}, status=400)
 
-class AllProductView(View):
+class ProductView(View):
     def get(self,request):
+        offset   = int(request.GET.get('offset', 0))
+        limit    = int(request.GET.get('limit', 100))
+        sort     = request.GET.get('sort', None)
+        ordering = request.GET.get('ordering', None)
+        search   = request.GET.get('search', None)
+
         products = Product.objects.all()
+
+        if sort      == 'avg':
+            products  = Product.objects.annotate(review_rate=Avg('review__rate')).order_by('-review_rate')
+        if sort      == 'review' or sort == 'like':
+            products  = Product.objects.annotate(contents=Count('review__contents')).order_by('-contents')
+        if sort      == 'price':
+            products  = Product.objects.order_by('price')
+        if ordering  == '-id':
+            products  = Product.objects.order_by('-id')
+        if search:
+            products  = Product.objects.filter(name__icontains=search)
+
 
         all_product = [{
                     'product_menu'    : product.category.menu.name,
@@ -54,16 +73,20 @@ class AllProductView(View):
                     'price'           : product.price,
                     'created_time'    : product.created_at,
                     'product_image'   : product.image_set.get().image_url,
-                    'sale_amount'     : 10,
-                    } for product in products]
+                    'discount'        : product.discount.rate,
+                    'stock'           : product.is_in_stock,
+                    'content_amount'  : product.review_set.filter().aggregate(Count('contents')),
+                    'rate_average'    : product.review_set.filter().aggregate(Avg('rate')),
+                    'product_likes'   : product.wishlist_set.filter().aggregate(Count('product_id'))
+                    } for product in products[offset:(limit+offset)]]
 
         return JsonResponse({'PRODUCTS': all_product}, status=200)
 
 class ProductDetailView(View):
     def get(self, request, product_id):
         try:
-            product = Product.objects.get(id=product_id)
-        
+            product    = Product.objects.get(id=product_id)
+
             product_detail = {
                     'id'              : product.id,
                     'product_category': product.category.name,
@@ -72,7 +95,10 @@ class ProductDetailView(View):
                     'price'           : product.price,
                     'created_time'    : product.created_at,
                     'image'           : product.image_set.get().image_url,
+                    'discount'        : product.discount.rate,
+                    'stock'           : product.is_in_stock,
                     }
+
             return JsonResponse({'product' :product_detail}, status=200)
 
         except Product.DoesNotExist:
@@ -80,7 +106,7 @@ class ProductDetailView(View):
 
 class MenuView(View):
     def get(self, request):
-        menus = Menu.objects.all()
+        menus = Menu.objects.prefetch_related('category_set').all()
 
         menu_category = [{
                 'id'         : menu.id,
@@ -91,3 +117,21 @@ class MenuView(View):
                 } for menu in menus]
 
         return JsonResponse({'main' : menu_category}, status=200)
+
+class BestProductView(View):
+    def get(self, request):
+        offset   = int(request.GET.get('offset', 0))
+        limit    = int(request.GET.get('limit', 100))
+        products = Product.objects.all()
+
+        best_product = [{
+                    'name'            : product.name,
+                    'price'           : product.price,
+                    'created_time'    : product.created_at,
+                    'product_image'   : product.image_set.get().image_url,
+                    'discount'        : product.discount.rate,
+                    'stock'           : product.is_in_stock,
+                    } for product in products[offset:(limit+offset)]]
+
+        return JsonResponse({'PRODUCTS': best_product}, status=200)
+
