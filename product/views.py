@@ -2,10 +2,10 @@ import json
 
 from django.http      import JsonResponse
 from django.views     import View
-from django.db.models import Count
+from django.db.models import Avg, Count, Sum
 
 from user.models      import User
-from product.models   import Category, Product, Image, Menu
+from product.models   import Category, Product, Image, Menu 
 from review.models    import Review, ReviewImage
 
 class PostView(View):
@@ -50,17 +50,21 @@ class ProductView(View):
         sort     = request.GET.get('sort', None)
         ordering = request.GET.get('ordering', None)
         search   = request.GET.get('search', None)
-        
-        #ordering_priority = []
-        if sort and ordering:
-            products = Product.objects.order_by('price', '-id')
-        if sort:
-            products = Product.objects.order_by('price')
-        if ordering:
-            products = Product.objects.order_by('-id')
+
+        products = Product.objects.all()
+
+        if sort      == 'avg':
+            products  = Product.objects.annotate(review_rate=Avg('review__rate')).order_by('-review_rate')
+        if sort      == 'review' or sort == 'like':
+            products  = Product.objects.annotate(contents=Count('review__contents')).order_by('-contents')
+        if sort      == 'price':
+            products  = Product.objects.order_by('price')
+        if ordering  == '-id':
+            products  = Product.objects.order_by('-id')
         if search:
-            products = Product.objects.filter(name__icontains=search)
-        
+            products  = Product.objects.filter(name__icontains=search)
+
+
         all_product = [{
                     'product_menu'    : product.category.menu.name,
                     'product_category': product.category.name,
@@ -71,6 +75,9 @@ class ProductView(View):
                     'product_image'   : product.image_set.get().image_url,
                     'discount'        : product.discount.rate,
                     'stock'           : product.is_in_stock,
+                    'content_amount'  : product.review_set.filter().aggregate(Count('contents')),
+                    'rate_average'    : product.review_set.filter().aggregate(Avg('rate')),
+                    'product_likes'   : product.wishlist_set.filter().aggregate(Count('product_id'))
                     } for product in products[offset:(limit+offset)]]
 
         return JsonResponse({'PRODUCTS': all_product}, status=200)
@@ -117,7 +124,7 @@ class BestProductView(View):
         limit    = int(request.GET.get('limit', 100))
         products = Product.objects.all()
 
-        Best_product = [{
+        best_product = [{
                     'name'            : product.name,
                     'price'           : product.price,
                     'created_time'    : product.created_at,
@@ -126,5 +133,5 @@ class BestProductView(View):
                     'stock'           : product.is_in_stock,
                     } for product in products[offset:(limit+offset)]]
 
-        return JsonResponse({'PRODUCTS': Best_product}, status=200)
+        return JsonResponse({'PRODUCTS': best_product}, status=200)
 
