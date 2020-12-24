@@ -30,5 +30,24 @@ class ReviewView(View):
             return JsonResponse({'MESSAGE': 'SUCCEESS', 'review': review}, status=200)
 
         except Review.DoesNotExist:
-            JsonResponse({'MESSAGE': 'NOOOOOO_REIVEW'}, stauts=404)
+            JsonResponse({'message': 'NOOOOOO_REIVEW'}, stauts=404)
 
+class ReviewIDView(View):
+    def get(self, request, review_id):
+        try:
+            review = Review.objects.get(id = review_id)
+
+            review_detail = {
+                 'review_id':        review.id,
+                 'user':             review.user.username,
+                 'product_name':     review.product.name,
+                 'reviewed_image':   review.reviewimage_set.get().image_url,
+                 'product_option':   review.product.productsize_set.name,
+                 'created_time':     review.created_at,
+                 'monthly_reviewed': review.is_monthly_reviewed,
+                 'rate':             review.rate,
+                'reviewed_body':     review.contents,
+                }
+            return JsonResponse({'message': 'SUCCESS','review': review_detail}, status=200)
+        except Review.DoesNotExist:
+            JsonResponse({'message': 'NOOOOOO_REIVEW'}, status =404)
