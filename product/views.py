@@ -11,38 +11,40 @@ from review.models    import Review, ReviewImage
 class PostView(View):
     def post(self, request):
         try:
-            data = json.loads(request.body)
-            product_name     = data['name']
-            product_price    = data['price']
-            product_category = data['category']
-            product_image    = data['image']
+            data     = json.loads(request.body)
+            name     = data['name']
+            price    = data['price']
+            category = data['category']
+            image    = data['image']
+            assert Category.objects.filter(name = category).exists(), 'NO_CATEGORY'
+            assert not Product.objects.filter(name = name).exists(), 'EXIST_PRODUCT'
 
-            # Key validation
-            if data['name'] == '' or data['price'] == '' or data['category'] == '' or data['image'] == '':
-                raise ValueError
+            category_id = Category.objects.get(name = category).id
+            Product.objects.create(
+                    name        = name,
+                    price       = price,
+                    category_id = category_id
+                    )
             
-            # Category validation
-            if not Category.objects.filter(name = product_category).exists():
-                return JsonResponse({'MESSAGE' : 'NO_CATEGORY'}, status=400)
-
-            # Product validation
-            if Product.objects.filter(name = product_name, price = product_price).exists():
-                return JsonResponse({'MESSAGE' : 'EXIST_PRODUCT'}, status=409)
-            category_id = Category.objects.get(name = product_category).id
-            Product.objects.create(name = product_name, price = product_price, category_id =category_id)
-            product_id = Product.objects.get(name = product_name).id
-            Image.objects.create(image_url = product_image, product_id = product_id)
+            product_id = Product.objects.get(name = name).id
+            Image.objects.create(
+                    image_url  = image,
+                    product_id = product_id
+                    )
             return JsonResponse({'MESSAGE' : 'SUCCESS'}, status=201)
 
-        
+        # KeyError validation
+        except KeyError:
+            return JsonResponse({'MESSAGE' : 'KEY_ERROR'}, status=400)
+
+        # AssertionError validation
+        except AssertionError as e:
+            return JsonResponse({'MESSAGE' : f'{e}'}, status=401)
+
         # Request validation
         except json.JSONDecodeError:
             return JsonResponse({'MESSAGE' : 'BAD_REQUEST'}, status=400)
         
-        # Not enough info
-        except ValueError:
-            return JsonResponse({'MESSAGE' : 'NOT_ENOUGH_INFO'}, status=400)
-
 class ProductView(View):
     def get(self,request):
         offset   = int(request.GET.get('offset', 0))
