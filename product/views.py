@@ -18,14 +18,12 @@ class PostView(View):
             image    = data['image']
             assert Category.objects.filter(name = category).exists(), 'NO_CATEGORY'
             assert not Product.objects.filter(name = name).exists(), 'EXIST_PRODUCT'
-
             category_id = Category.objects.get(name = category).id
             Product.objects.create(
                     name        = name,
                     price       = price,
                     category_id = category_id
                     )
-            
             product_id = Product.objects.get(name = name).id
             Image.objects.create(
                     image_url  = image,
@@ -68,18 +66,18 @@ class ProductView(View):
 
 
         all_product = [{
-                    'product_menu'    : product.category.menu.name,
-                    'product_category': product.category.name,
-                    'product_id'      : product.id,
-                    'name'            : product.name,
-                    'price'           : product.price,
-                    'created_time'    : product.created_at,
-                    'product_image'   : product.image_set.get().image_url,
-                    'discount'        : product.discount.rate,
-                    'stock'           : product.is_in_stock,
-                    'content_amount'  : product.review_set.filter().aggregate(Count('contents')),
-                    'rate_average'    : product.review_set.filter().aggregate(Avg('rate')),
-                    'product_likes'   : product.wishlist_set.filter().aggregate(Count('product_id'))
+                    'product_menu'      : product.category.menu.name,
+                    'product_category'  : product.category.name,
+                    'product_id'        : product.id,
+                    'name'              : product.name,
+                    'price'             : product.price,
+                    'created_time'      : product.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'image'             : product.image_set.get().image_url,
+                    'discount'          : product.discount.rate,
+                    'stock'             : product.is_in_stock,
+                    'content_amount'    : product.review_set.filter().aggregate(Count('contents')),
+                    'rate_average'      : product.review_set.filter().aggregate(Avg('rate')),
+                    'product_likes'     : product.wishlist_set.filter().aggregate(Count('product_id'))
                     } for product in products[offset:(limit+offset)]]
 
         return JsonResponse({'PRODUCTS': all_product}, status=200)
@@ -90,18 +88,18 @@ class ProductDetailView(View):
             product    = Product.objects.get(id=product_id)
 
             product_detail = {
-                    'id'              : product.id,
-                    'product_category': product.category.name,
-                    'product_menu'    : product.category.menu.name,
-                    'product_name'    : product.name,
-                    'price'           : product.price,
-                    'created_time'    : product.created_at,
-                    'image'           : product.image_set.get().image_url,
-                    'discount'        : product.discount.rate,
-                    'stock'           : product.is_in_stock,
+                    'id'                : product.id,
+                    'product_category'  : product.category.name,
+                    'product_menu'      : product.category.menu.name,
+                    'name'              : product.name,
+                    'price'             : product.price,
+                    'created_time'      : product.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'image'             : product.image_set.get().image_url,
+                    'discount'          : product.discount.rate,
+                    'stock'             : product.is_in_stock,
                     }
 
-            return JsonResponse({'product' :product_detail}, status=200)
+            return JsonResponse({'PRODUCT' :product_detail}, status=200)
 
         except Product.DoesNotExist:
             return JsonResponse({'MESSAGE' : 'NO_PRODUCT'}, status=409)
@@ -118,7 +116,7 @@ class MenuView(View):
                     for category  in menu.category_set.all()]
                 } for menu in menus]
 
-        return JsonResponse({'main' : menu_category}, status=200)
+        return JsonResponse({'MAIN' : menu_category}, status=200)
 
 class BestProductView(View):
     def get(self, request):
@@ -129,8 +127,8 @@ class BestProductView(View):
         best_product = [{
                     'name'            : product.name,
                     'price'           : product.price,
-                    'created_time'    : product.created_at,
-                    'product_image'   : product.image_set.get().image_url,
+                    'created_time'    : product.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'image'           : product.image_set.get().image_url,
                     'discount'        : product.discount.rate,
                     'stock'           : product.is_in_stock,
                     } for product in products[offset:(limit+offset)]]
